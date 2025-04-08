@@ -1,0 +1,15 @@
+icon_font:
+  input_svg_dir: lib/icon
+  output_font_file: lib/icon/icon.otf
+
+  output_class_file: lib/icon/icon.dart
+  class_name: CustomIcons
+  format: true
+  # package:
+
+  font_name: CustomIcon
+  normalize: false
+  ignore_shapes: false
+
+  recursive: false
+  verbose: true

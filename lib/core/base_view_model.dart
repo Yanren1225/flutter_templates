@@ -1,13 +1,15 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_templates/core/auto_unsub.dart';
 
-abstract class BaseViewModel with AutoUnsub {
+abstract class BaseViewModel extends ChangeNotifier with AutoUnsub {
   @mustCallSuper
   void init() {}
 
+  @override
   @mustCallSuper
   void dispose() {
+    super.dispose();
     clearSubscriptions();
     onTickerDispose();
   }

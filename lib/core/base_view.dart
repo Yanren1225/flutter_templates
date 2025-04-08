@@ -36,6 +36,12 @@ class BaseViewState<T extends BaseViewModel> extends State<BaseView<T>> {
   @nonVirtual
   @override
   Widget build(BuildContext context) {
-    return widget.buildView(context, viewModel);
+    return ListenableBuilder(
+      listenable: viewModel,
+      builder: (context, child) {
+        return child!;
+      },
+      child: widget.buildView(context, viewModel),
+    );
   }
 }

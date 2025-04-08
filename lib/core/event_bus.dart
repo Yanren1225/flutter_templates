@@ -21,9 +21,14 @@ class EventBus {
     return _events[T] as Signal<T?>;
   }
 
-  void Function() listen<T>(void Function(T? event) callback) {
+  void Function() listen<T>(void Function(T event) callback) {
     final signal = this.signal<T>();
-    return effect(() => callback(signal.value));
+    return effect(() {
+      final value = signal.value;
+      if (value != null) {
+        callback(value);
+      }
+    });
   }
 
   void dispose<T>() {

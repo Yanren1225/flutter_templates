@@ -1,3 +1,4 @@
+import 'package:meta/meta.dart';
 import 'package:signals/signals_flutter.dart';
 import 'base_view_model.dart';
 import 'loading_state.dart';
@@ -5,7 +6,7 @@ import 'loading_state.dart';
 /// 用于自定义分页加载的控制器
 /// 提供了更灵活的状态控制，允许完全自定义加载逻辑
 abstract class CustomPaginationViewModel<T> extends BaseViewModel {
-  final dataList = Signal<List<T>>([]);
+  final dataList = listSignal<T>([]);
   final state = Signal<LoadingState>(LoadingState.initial);
   final errorMessage = Signal<String>('');
 
@@ -45,32 +46,44 @@ abstract class CustomPaginationViewModel<T> extends BaseViewModel {
     if (_pageNum > 1) _pageNum--;
   }
 
+  Future<List<T>?> onLoadData(int pageNum);
+
   /// 更新数据列表
-  void updateDataList(List<T> newItems, {bool append = false}) {
-    if (append) {
-      dataList.value = [...dataList.value, ...newItems];
-    } else {
-      dataList.value = newItems;
-    }
-  }
+  void updateDataList(List<T> newItems);
 
   /// 更新加载状态
+  @protected
   void updateState(LoadingState newState) {
     state.value = newState;
   }
 
   /// 更新错误信息
+  @protected
   void updateError(String message) {
     errorMessage.value = message;
   }
 
   /// 检查是否应该加载更多
+  @protected
   bool shouldLoadMore() {
     return hasMore && state.value != LoadingState.loading;
   }
 
   /// 自定义刷新逻辑
-  Future<void> refresh();
+  Future<void> refresh({bool first = false}) async {
+    try {
+      resetPage();
+      final data = await onLoadData(pageNum);
+      if (data == null || data.isEmpty) {
+        dataList.clear();
+      } else {
+        dataList.clear();
+        updateDataList(data);
+      }
+    } catch (e) {
+      if (first) dataList.clear();
+    }
+  }
 
   /// 自定义加载更多逻辑
   Future<void> loadMore();
@@ -78,6 +91,6 @@ abstract class CustomPaginationViewModel<T> extends BaseViewModel {
   @override
   void init() {
     super.init();
-    refresh();
+    refresh(first: true);
   }
 }

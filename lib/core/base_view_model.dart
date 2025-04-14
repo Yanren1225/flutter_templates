@@ -1,6 +1,6 @@
+import 'auto_unsub.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter_templates/core/auto_unsub.dart';
 
 abstract class BaseViewModel extends ChangeNotifier with AutoUnsub {
   @mustCallSuper
@@ -30,7 +30,11 @@ mixin ViewModelTicker on BaseViewModel implements TickerProvider {
   @override
   void onTickerDispose() {
     for (final ticker in _tickers) {
-      ticker.dispose();
+      try {
+        ticker.dispose();
+      } catch (e) {
+        debugPrint('Error disposing ticker: $e');
+      }
     }
     _tickers.clear();
     super.onTickerDispose();

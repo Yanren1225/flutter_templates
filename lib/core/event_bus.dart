@@ -23,10 +23,19 @@ class EventBus {
 
   void Function() listen<T>(void Function(T event) callback) {
     final signal = this.signal<T>();
+    bool isFirstRun = true;
+    T? lastValue;
+
     return effect(() {
       final value = signal.value;
       if (value != null) {
-        callback(value);
+        if (isFirstRun) {
+          isFirstRun = false;
+          lastValue = value;
+        } else if (value != lastValue) {
+          lastValue = value;
+          callback(value);
+        }
       }
     });
   }

@@ -1,11 +1,11 @@
-import 'package:flutter_templates/core/custom_pagination_view_model.dart';
+import 'custom_pagination_view_model.dart';
 
 import 'loading_state.dart';
 
 abstract class PaginationViewModel<T> extends CustomPaginationViewModel<T> {
   @override
   Future<void> loadMore() async {
-    if (!hasMore || state.value == LoadingState.loading) return;
+    if (!shouldLoadMore) return;
     try {
       increasePage();
       final data = await _load();
@@ -56,7 +56,7 @@ abstract class PaginationViewModel<T> extends CustomPaginationViewModel<T> {
       }
     } catch (e) {
       state.value = LoadingState.error;
-      return [];
+      rethrow;
     }
   }
 

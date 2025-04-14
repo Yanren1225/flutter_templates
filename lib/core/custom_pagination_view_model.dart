@@ -65,9 +65,7 @@ abstract class CustomPaginationViewModel<T> extends BaseViewModel {
 
   /// 检查是否应该加载更多
   @protected
-  bool shouldLoadMore() {
-    return hasMore && state.value != LoadingState.loading;
-  }
+  bool get shouldLoadMore => hasMore && state.value != LoadingState.loading;
 
   /// 自定义刷新逻辑
   Future<void> refresh({bool first = false}) async {

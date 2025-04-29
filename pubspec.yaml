@@ -18,6 +18,7 @@ dependencies:
   dio: ^5.8.0+1
   logger: ^2.5.0
   meta: ^1.16.0
+  rxdart: ^0.28.0
 
 dev_dependencies:
   flutter_test:

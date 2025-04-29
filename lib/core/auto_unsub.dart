@@ -1,13 +1,15 @@
-mixin AutoUnsub {
-  final subscriptionList = <Function>[];
+import 'dart:async';
 
-  void addSubscription(Function subscription) {
+mixin AutoUnsub {
+  final subscriptionList = <StreamSubscription>[];
+
+  void addSubscription(StreamSubscription subscription) {
     subscriptionList.add(subscription);
   }
 
   void clearSubscriptions() {
     for (final subscription in subscriptionList) {
-      subscription();
+      subscription.cancel();
     }
     subscriptionList.clear();
   }

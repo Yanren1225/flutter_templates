@@ -1,50 +1,109 @@
-import 'package:signals/signals.dart';
+import 'dart:async';
+
+import 'package:flutter_templates/ext/type.dart';
+import 'package:rxdart/rxdart.dart';
+
+abstract class BaseEvent {}
+
+abstract class NormalEvent extends BaseEvent {}
+
+abstract class StickyEvent extends BaseEvent {}
 
 class EventBus {
-  static final EventBus _instance = EventBus._internal();
-  factory EventBus() => _instance;
-  EventBus._internal();
+  EventBus._();
+  static final EventBus _instance = EventBus._();
+  static EventBus get instance => _instance;
 
-  final Map<Type, Signal<dynamic>> _events = {};
+  final Map<Type, Subject> _subjects = <Type, Subject>{};
 
-  void emit<T>(T event) {
-    final signal = _events[T];
-    if (signal != null) {
-      (signal as Signal<T?>).value = event;
-    }
-  }
-
-  Signal<T?> signal<T>() {
-    if (!_events.containsKey(T)) {
-      _events[T] = Signal<T?>(null);
-    }
-    return _events[T] as Signal<T?>;
-  }
-
-  void Function() listen<T>(void Function(T event) callback) {
-    final signal = this.signal<T>();
-    bool isFirstRun = true;
-    T? lastValue;
-
-    return effect(() {
-      final value = signal.value;
-      if (value != null) {
-        if (isFirstRun) {
-          isFirstRun = false;
-          lastValue = value;
-        } else if (value != lastValue) {
-          lastValue = value;
-          callback(value);
-        }
+  Subject<E> _getSubject<E>() {
+    if (checkType<E>().isExtendOf<NormalEvent>()) {
+      if (!_subjects.containsKey(E)) {
+        _subjects[E] = PublishSubject<E>();
       }
-    });
+      return _subjects[E] as PublishSubject<E>;
+    } else {
+      if (!_subjects.containsKey(E)) {
+        _subjects[E] = BehaviorSubject<E>();
+      }
+      return _subjects[E] as BehaviorSubject<E>;
+    }
   }
 
-  void dispose<T>() {
-    _events.remove(T);
+  StreamSubscription<E> on<E extends BaseEvent>(
+    void Function(E event)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) {
+    final subject = _getSubject<E>();
+
+    if (subject is BehaviorSubject<E> && subject.hasValue) {
+      final value = subject.value;
+      if ((value as dynamic) != null) {
+        onData?.call(subject.value);
+      }
+    }
+
+    return subject.stream.listen(
+      onData,
+      onError: onError,
+      onDone: onDone,
+      cancelOnError: cancelOnError,
+    );
   }
 
-  void clear() {
-    _events.clear();
+  Stream<E> stream<E extends BaseEvent>() => _getSubject<E>().stream;
+
+  void fire<E extends NormalEvent>(E event) {
+    _getSubject<E>().add(event);
+  }
+
+  void fireSticky<E extends StickyEvent>(E event) {
+    _getSubject<E>().add(event);
+  }
+
+  /// 获取指定类型的粘性事件
+  E? getStickyEvent<E extends StickyEvent>() {
+    if (!_subjects.containsKey(E)) {
+      return null;
+    }
+
+    final subject = _subjects[E] as BehaviorSubject<E>;
+    return subject.hasValue ? subject.value : null;
+  }
+
+  /// 移除指定类型的粘性事件
+  E? removeStickyEvent<E extends StickyEvent>() {
+    if (!_subjects.containsKey(E)) {
+      return null;
+    }
+
+    final subject = _subjects[E] as BehaviorSubject<E>;
+    final hasValue = subject.hasValue;
+    final value = hasValue ? subject.value : null;
+
+    if (hasValue) {
+      subject.close();
+      _subjects[E] = BehaviorSubject<E>();
+    }
+
+    return value;
+  }
+
+  /// 销毁所有事件流
+  void destroy() {
+    for (final Subject subject in _subjects.values) {
+      subject.close();
+    }
+    _subjects.clear();
+  }
+
+  /// 销毁指定类型的事件流
+  void destroyType<E extends BaseEvent>() {
+    if (_subjects.containsKey(E)) {
+      _subjects[E]!.close();
+      _subjects.remove(E);
+    }
   }
 }

@@ -6,6 +6,6 @@ class AppService extends Service {
   void onInit() {
     super.onInit();
 
-    addSubscription(EventBus().listen((event) {}));
+    addSubscription(EventBus.instance.on((event) {}));
   }
 }

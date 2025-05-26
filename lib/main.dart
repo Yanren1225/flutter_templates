@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_templates/core/event_bus.dart';
+import 'package:flutter_templates/core/service_locator.dart';
 import 'package:flutter_templates/events/app_life_event.dart';
 import 'package:flutter_templates/router/router.dart';
+import 'package:flutter_templates/services/app_service.dart';
 
 void main() {
+  ServiceLocator.instance.register(AppService());
   runApp(MyApp());
 }
 
@@ -31,7 +34,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
 
-    EventBus().emit(AppLifecycleStateEvent(state));
+    EventBus.instance.fire(AppLifecycleStateEvent(state));
   }
 
   @override

@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_templates/core/auto_unsub.dart';
+import 'package:flutter_templates/core/auto_dispose.dart';
 import 'package:signals/signals_flutter.dart';
 
 /// Service 基类
 /// 用于处理全局业务逻辑和状态管理
-abstract class Service with AutoUnsub {
+abstract class Service with AutoDispose {
   final Map<String, Signal> _signals = {};
   bool _initialized = false;
 

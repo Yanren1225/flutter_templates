@@ -9,7 +9,7 @@ class NetViewModel extends BaseViewModel {
 
   void loadImage() async {
     state.value = LoadingState.loading;
-    final result = await HttpClient.getRaw(
+    final result = await RawHttpClient.get(
       'https://deno-api.imyan.ren/spotlight?format=url',
     );
 

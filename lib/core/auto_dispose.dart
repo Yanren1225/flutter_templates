@@ -1,6 +1,6 @@
 import 'dart:async';
 
-mixin AutoUnsub {
+mixin AutoDispose {
   final subscriptionList = <StreamSubscription>[];
 
   void addSubscription(StreamSubscription subscription) {

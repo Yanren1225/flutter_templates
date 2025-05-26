@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_templates/utils/logger.dart';
 import 'package:logger/logger.dart';
@@ -28,6 +30,7 @@ class LoggerInterceptor extends Interceptor {
     networkLogger.log(
       Level.trace,
       "🆗 Response: [${response.statusCode}] ${response.requestOptions.uri}\n"
+      "Headers: ${_formatJsonData(response.requestOptions.headers)}\n"
       "Duration: ${duration}ms\n"
       "Body: ${_formatJsonData(response.data)}",
     );
@@ -53,12 +56,14 @@ class LoggerInterceptor extends Interceptor {
     handler.next(err);
   }
 
+  final JsonEncoder _prettyJson = const JsonEncoder.withIndent('  ');
+
   String _formatJsonData(dynamic data) {
     if (data == null) return 'null';
 
     try {
       if (data is Map || data is List) {
-        return data.toString();
+        return _prettyJson.convert(data);
       } else if (data is String) {
         return data;
       } else {

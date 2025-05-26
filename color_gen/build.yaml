@@ -1,0 +1,16 @@
+builders:
+  color_gen:
+    import: "package:color_gen/builder.dart"
+    builder_factories: ["colorGenBuilder"]
+    build_extensions: { ".dart": [".g.dart"] }
+    auto_apply: dependents
+    build_to: source
+    applies_builders:
+      - "source_gen|combining_builder"
+      - "source_gen|part_cleanup"
+    defaults:
+      options:
+        color_gen:
+          enabled: true
+          color_file: lib/color/colors.json
+          output_file: lib/color/color_extensions.g.dart

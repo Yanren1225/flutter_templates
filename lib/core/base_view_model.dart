@@ -1,8 +1,8 @@
-import 'auto_unsub.dart';
+import 'auto_dispose.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 
-abstract class BaseViewModel extends ChangeNotifier with AutoUnsub {
+abstract class BaseViewModel extends ChangeNotifier with AutoDispose {
   @mustCallSuper
   void init() {}
 

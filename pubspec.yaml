@@ -19,6 +19,7 @@ dependencies:
   logger: ^2.5.0
   meta: ^1.16.0
   rxdart: ^0.28.0
+  fpdart: ^1.1.1
 
 dev_dependencies:
   flutter_test:
@@ -26,6 +27,8 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   icon_font_generator: ^4.0.0
   husky: ^0.1.7
+  color_gen:
+    path: ./color_gen
 
 dependency_overrides:
   logger: ^2.5.0

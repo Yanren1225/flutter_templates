@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_templates/app_config.dart';
-import 'package:flutter_templates/http/logger_interceptor.dart';
 import 'package:flutter_templates/utils/logger.dart';
-import 'package:fpdart/fpdart.dart';
 
 import 'base_response.dart';
+import 'http_result.dart';
+import 'logger_interceptor.dart';
+import 'request_interceptor.dart';
 
 enum HttpMethod {
   get,
@@ -15,16 +16,41 @@ enum HttpMethod {
   String get value => name.toUpperCase();
 }
 
+enum ApiType {
+  defaultType('default', null),
+  dev('dev', AppConfig.devBaseUrl),
+  prod('prod', AppConfig.prodBaseUrl);
+
+  final String name;
+  final String? url;
+  const ApiType(this.name, this.url);
+}
+
 class HttpClient {
-  static final Dio dio = Dio(
-      BaseOptions(
-        baseUrl: AppConfig.baseUrl,
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 30),
-      ),
-    )
-    // ..interceptors.add(RequestInterceptor())
-    ..interceptors.add(LoggerInterceptor());
+  static Dio? _dio;
+  static ApiType? _currentType;
+
+  static Future<void> init(ApiType type) async {
+    if (_currentType == type && _dio != null) return;
+    _currentType = type;
+    _dio =
+        Dio(
+            BaseOptions(
+              baseUrl: type.url ?? AppConfig.baseUrl,
+              connectTimeout: const Duration(seconds: 30),
+              receiveTimeout: const Duration(seconds: 30),
+            ),
+          )
+          ..interceptors.add(RequestInterceptor())
+          ..interceptors.add(LoggerInterceptor());
+  }
+
+  static Dio get dio {
+    if (_dio == null) {
+      throw Exception("HttpClient 未初始化，请先调用 HttpClient.init");
+    }
+    return _dio!;
+  }
 
   static final RawHttpClient raw = RawHttpClient._();
 }
@@ -46,8 +72,11 @@ class RawHttpClient {
         queryParameters: query,
         data: data,
         options:
-            options?.copyWith(method: method.value) ??
-            Options(method: method.value),
+            (options?.copyWith(
+                  method: method.value,
+                  validateStatus: (_) => true,
+                ) ??
+                Options(method: method.value, validateStatus: (_) => true)),
         cancelToken: cancelToken,
       );
 
@@ -201,13 +230,26 @@ class DataHttpClient {
   );
 }
 
+extension FutureBaseResponseExt<T> on Future<BaseResponse<T>> {
+  Future<HttpResult<T>> toHttpResult() {
+    return then(
+      ResponseHttpClient.basicResult,
+    ).catchError((e, stack) => ResponseHttpClient.basicError<T>(e, stack));
+  }
+}
+
 class ResponseHttpClient {
   ResponseHttpClient._();
 
-  static Either<String, T> basicResult<T>(BaseResponse<T> response) =>
+  static HttpResult<T> basicError<T>(dynamic error, StackTrace stackTrace) =>
+      HttpResult<T>.catchError(error);
+
+  static HttpResult<T> basicResult<T>(BaseResponse<T> response) =>
       response.success
-          ? Either.right(response.data as T)
-          : Either.left(response.message);
+          ? HttpResult.success(response.data as T)
+          : HttpResult.fail(
+            HttpError(message: response.message, code: response.code),
+          );
 
   static Future<BaseResponse<T>> request<T>({
     required String path,
@@ -226,7 +268,10 @@ class ResponseHttpClient {
       options: options,
       cancelToken: cancelToken,
     );
-    return BaseResponse.fromJson(response.data, fromJson);
+
+    final result = BaseResponse.fromJson(response.data, fromJson);
+
+    return result;
   }
 
   static Future<BaseResponse<T>> get<T>(

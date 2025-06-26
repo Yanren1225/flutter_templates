@@ -2,14 +2,15 @@ import 'auto_dispose.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 
-abstract class BaseViewModel extends ChangeNotifier with AutoDispose {
+abstract class BaseViewModel with AutoDispose {
   @mustCallSuper
-  void init() {}
+  void init() {
+    debugPrint('ViewModel initialized: $runtimeType');
+  }
 
-  @override
   @mustCallSuper
   void dispose() {
-    super.dispose();
+    debugPrint('ViewModel disposed: $runtimeType');
     clearSubscriptions();
     onTickerDispose();
   }

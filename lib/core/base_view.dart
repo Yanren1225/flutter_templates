@@ -1,68 +1,42 @@
 import 'package:flutter/material.dart';
-import 'package:meta/meta.dart';
+import 'package:provider/provider.dart';
 import 'base_view_model.dart';
 
-abstract class BaseView<T extends BaseViewModel> extends StatefulWidget {
+abstract class BaseView<T extends BaseViewModel> extends StatelessWidget {
   const BaseView({super.key});
 
-  @override
-  State<BaseView<T>> createState() => BaseViewState<T>();
-
-  /// 视图模型
   T createViewModel();
 
-  /// 构建视图
+  @protected
+  T viewModel(BuildContext context) => Provider.of<T>(context, listen: false);
+
   Widget buildView(BuildContext context, T viewModel);
 
-  /// 视图模型初始化后回调
   @protected
   void onViewModelReady(T viewModel) {}
 
-  /// 构建错误时的视图
   @protected
   Widget buildError(BuildContext context, Object error) =>
       Center(child: Text('发生错误: ${error.toString()}'));
-}
 
-class BaseViewState<T extends BaseViewModel> extends State<BaseView<T>> {
-  late final T viewModel;
-  Object? _initError;
-
-  @nonVirtual
-  @override
-  void initState() {
-    super.initState();
-    try {
-      viewModel = widget.createViewModel();
-      viewModel.init();
-      widget.onViewModelReady(viewModel);
-    } catch (e) {
-      _initError = e;
-      debugPrint('ViewModel初始化错误: $e');
-    }
-  }
-
-  @nonVirtual
-  @override
-  void dispose() {
-    if (_initError == null) {
-      viewModel.dispose();
-    }
-    super.dispose();
-  }
-
-  @nonVirtual
   @override
   Widget build(BuildContext context) {
-    if (_initError != null) {
-      return widget.buildError(context, _initError!);
-    }
-
-    return ListenableBuilder(
-      listenable: viewModel,
-      builder: (context, _) {
-        return widget.buildView(context, viewModel);
+    return Provider(
+      create: (_) {
+        try {
+          final viewModel = createViewModel();
+          viewModel.init();
+          onViewModelReady(viewModel);
+          return viewModel;
+        } catch (e) {
+          debugPrint('ViewModel初始化错误: $e');
+          return throw e;
+        }
       },
+      dispose: (context, value) => value.dispose(),
+      child: Consumer<T>(
+        builder: (context, viewModel, _) => buildView(context, viewModel),
+      ),
     );
   }
 }
